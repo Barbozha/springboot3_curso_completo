@@ -23,6 +23,12 @@ import com.barbozha.springboot.repositories.ProductRepository;
 
 import jakarta.validation.Valid;
 
+
+//estes link foram colocados na mão porque a IDE nao importou.
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
+
 @RestController
 @RequestMapping
 public class ProductController {
@@ -39,7 +45,14 @@ public class ProductController {
 	
 	@GetMapping("/products")
 	public ResponseEntity<List<ProductModel>> getAllProducts(){
-		return ResponseEntity.status(HttpStatus.OK).body(productRepository.findAll());
+		List<ProductModel> ProductList = productRepository.findAll();
+		if(!ProductList.isEmpty()) {
+			for(ProductModel product : ProductList) {
+				UUID id = product.getIdProduct();
+				product.add(linkTo(methodOn(ProductController.class).getOneProduct(id)).withSelfRel());
+			}
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(ProductList);
 	}
 	
 	@GetMapping("/products/{id}")
@@ -48,6 +61,7 @@ public class ProductController {
 		if(obj.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Registro NÃO encontrado.");
 		}
+		obj.get().add(linkTo(methodOn(ProductController.class).getAllProducts()).withSelfRel());
 		return ResponseEntity.status(HttpStatus.OK).body(obj.get());
 	}
 	
